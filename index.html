@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Monitoreo - Manglar</title>
+<!-- CÓDIGO PARA ICONO CON IMAGEN DESCARGADA -->
+  <link rel="icon" type="image/png" href="manglar.ico">
+  <style>
+    :root {
+      --primary: #1b4332;
+      --secondary: #2d6a4f;
+      --accent: #52b788;
+      --danger: #d90429;
+      --success: #38b000;
+      --warning: #ffb703;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', System-UI, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+
+      /* CONFIGURACIÓN DE LA IMAGEN DE FONDO */
+      /* Reemplaza 'fondo-manglar.jpg' por la imagen de tu preferencia o un enlace de internet */
+      background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), 
+        url('https://www.prensa.com/resizer/v2/XALPV3GLVREJPMR5BO4L2CE7VQ.jpg?auth=317f49e1ee81270c4b32ee3a439d7f6b78de0d2a337de7066265fa6d0f416ac0&width=950&height=534&quality=85'); 
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+
+    /* CONTENEDOR PRINCIPAL TRANSLÚCIDO (Se adapta a Celulares y Tablets) */
+    .container {
+      width: 100%;
+      max-width: 520px; /* Tamaño ideal para Tablets/Celulares */
+      background: rgba(255, 255, 255, 0.88); /* Fondo blanco con transparencia */
+      backdrop-filter: blur(10px); /* Efecto de desenfoque de fondo */
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 25px 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      color: var(--primary);
+      margin: 5px 0;
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      color: #444;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Botón de conexión */
+    .btn-connect {
+      width: 100%;
+      background-color: var(--secondary);
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+    }
+
+    .btn-connect:active {
+      transform: scale(0.98);
+    }
+
+    #status {
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+      color: #444;
+      margin: 10px 0 20px 0;
+    }
+
+    /* Banner Principal de Recomendación */
+    #bannerRecomendacion {
+      background-color: #6c757d;
+      color: white;
+      padding: 20px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      margin-bottom: 20px;
+      transition: background-color 0.5s ease;
+    }
+
+    #bannerRecomendacion h2 {
+      margin: 0 0 5px 0;
+      font-size: 22px;
+    }
+
+    #bannerRecomendacion p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.95;
+    }
+
+    /* Grid Adaptativo para Sensores */
+    .grid-sensores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      border-left: 5px solid var(--accent);
+    }
+
+    .card.full-width {
+      grid-column: span 2;
+    }
+
+    .card-title {
+      font-size: 12px;
+      color: #555;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .card-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .unit {
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* AJUSTES RESPONSIVOS (Tablets y Pantallas Medianas) */
+    @media (max-width: 400px) {
+      .grid-sensores {
+        grid-template-columns: 1fr; /* En celulares muy pequeños, 1 columna */
+      }
+      .card.full-width {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Monitor Manglar 🌿</h1>
+      <div class="subtitle">Estación de Control & Acceso BLE</div>
+    </header>
+
+    <button class="btn-connect" onclick="conectarBLE()">Conectar Módulo JDY-16</button>
+    <div id="status">Estado: Desconectado</div>
+
+    <!-- BANNER DE EVALUACIÓN DE ACCESO -->
+    <div id="bannerRecomendacion">
+      <h2>ESPERANDO DATOS</h2>
+      <p>Conéctate al dispositivo para evaluar el estado del terreno.</p>
+    </div>
+
+    <!-- TARJETAS DE SENSORES -->
+    <div class="grid-sensores">
+      
+      <div class="card">
+        <div class="card-title">Temperatura</div>
+        <div class="card-value"><span id="valTemp">--</span> <span class="unit">°C</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Humedad Aire</div>
+        <div class="card-value"><span id="valHumAmb">--</span> <span class="unit">%</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Humedad Suelo</div>
+        <div class="card-value"><span id="valHumSuelo">--</span> <span class="unit">%</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Estado Suelo</div>
+        <div class="card-value" id="valEstSuelo">--</div>
+      </div>
+
+      <div class="card full-width">
+        <div class="card-title">Visitantes / Conteo en Matriz</div>
+        <div class="card-value"><span id="valPasos">--</span> <span class="unit">personas registradas</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // UUIDs del módulo JDY-16
+    const SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+    const CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
+
+    async function conectarBLE() {
+      const status = document.getElementById('status');
+      try {
+        status.innerText = "Buscando módulo Bluetooth...";
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [SERVICE_UUID]
+        });
+
+        status.innerText = "Conectando al servidor GATT...";
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+        await characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', procesarDatosEntrantes);
+
+        status.innerText = "¡Conectado y Recibiendo Datos!";
+        status.style.color = "#1b4332";
+      } catch (error) {
+        status.innerText = "Error dePara agregar una imagen de fondo y asegurar que la interfaz se adapte a celulares y tablets, aplicamos tres ajustes clave en el diseño:
+
+1. **`background-size: cover` + `background-position: center`**: La imagen de fondo se ajusta y escala automáticamente sin distorsionarse en ninguna pantalla.
+2. **Filtro con oscurecimiento (`linear-gradient`)**: Agrega un tono oscuro transparente sobre la imagen para que las letras y datos siempre sean fáciles de leer.
+3. **Tarjeta translúcida (`backdrop-filter`)**: Genera un contenedor estilo cristal semi-transparente que resalta sobre el fondo en tablets y móviles.
+
+---
+
+### Código completo actualizado (`index.html`)
+
+Reemplaza todo el contenido de tu archivo `index.html` con este código:
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Monitoreo - Manglar</title>
+  <style>
+    :root {
+      --primary: #1b4332;
+      --secondary: #2d6a4f;
+      --accent: #52b788;
+      --danger: #d90429;
+      --success: #38b000;
+      --warning: #ffb703;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', System-UI, sans-serif;
+      margin: 0;
+      padding: 20px 10px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+     /* IMAGEN DE FONDO RESPONSIVA CON CAPA OSCURA */
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                url('https://www.prensa.com/resizer/v2/XALPV3GLVREJPMR5BO4L2CE7VQ.jpg?auth=317f49e1ee81270c4b32ee3a439d7f6b78de0d2a337de7066265fa6d0f416ac0&width=950&height=534&quality=85')no-repeat center center fixed;
+  background-size: cover;
+    }
+
+    /* CONTENEDOR PRINCIPAL TIPO CRISTAL (ADAPTADO A MÓVILES Y TABLETS) */
+    .container {
+      width: 100%;
+      max-width: 520px; /* Tamaño ideal para cel y tablet */
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 25px 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      color: var(--primary);
+      margin: 5px 0;
+      font-size: 26px;
+    }
+
+    .subtitle {
+      color: #555;
+      font-size: 14px;
+    }
+
+    /* Botón de conexión */
+    .btn-connect {
+      width: 100%;
+      background-color: var(--secondary);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      transition: background 0.3s, transform 0.1s;
+    }
+
+    .btn-connect:hover {
+      background-color: var(--primary);
+    }
+
+    .btn-connect:active {
+      transform: scale(0.98);
+    }
+
+    #status {
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+      color: #666;
+      margin: 10px 0 20px 0;
+    }
+
+    /* Banner Principal de Recomendación */
+    #bannerRecomendacion {
+      background-color: #6c757d;
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      margin-bottom: 20px;
+      transition: background-color 0.5s ease;
+    }
+
+    #bannerRecomendacion h2 {
+      margin: 0 0 5px 0;
+      font-size: 22px;
+    }
+
+    #bannerRecomendacion p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.95;
+    }
+
+    /* Grid de Lecturas de Sensores */
+    .grid-sensores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      border-left: 5px solid var(--accent);
+    }
+
+    .card.full-width {
+      grid-column: span 2;
+    }
+
+    .card-title {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .card-value {
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .unit {
+      font-size: 14px;
+      color: #888;
+    }
+
+    /* DISEÑO RESPONSIVO PARA TABLETS Y PANTALLAS MÁS ANCHAS */
+    @media (min-width: 768px) {
+      .container {
+        max-width: 650px;
+        padding: 35px 30px;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      .card-value {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Monitor Manglar 🌿</h1>
+      <div class="subtitle">Estación de Control & Acceso BLE</div>
+    </header>
+
+    <button class="btn-connect" onclick="conectarBLE()">Conectar Módulo JDY-16</button>
+    <div id="status">Estado: Desconectado</div>
+
+    <!-- BANNER DE EVALUACIÓN DE ACCESO -->
+    <div id="bannerRecomendacion">
+      <h2>ESPERANDO DATOS</h2>
+      <p>Conéctate al dispositivo para evaluar el estado del terreno.</p>
+    </div>
+
+    <!-- TARJETAS DE SENSORES -->
+    <div class="grid-sensores">
+      
+      <div class="card">
+        <div class="card-title">Temperatura</div>
+        <div class="card-value"><span id="valTemp">--</span> <span class="unit">°C</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Humedad Aire</div>
+        <div class="card-value"><span id="valHumAmb">--</span> <span class="unit">%</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Humedad Suelo</div>
+        <div class="card-value"><span id="valHumSuelo">--</span> <span class="unit">%</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Estado Suelo</div>
+        <div class="card-value" id="valEstSuelo">--</div>
+      </div>
+
+      <div class="card full-width">
+        <div class="card-title">Visitantes / Conteo en Matriz</div>
+        <div class="card-value"><span id="valPasos">--</span> <span class="unit">personas registradas</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // UUIDs del módulo JDY-16
+    const SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
+    const CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
+
+    async function conectarBLE() {
+      const status = document.getElementById('status');
+      try {
+        status.innerText = "Buscando módulo Bluetooth...";
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [SERVICE_UUID]
+        });
+
+        status.innerText = "Conectando al servidor GATT...";
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+        await characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', procesarDatosEntrantes);
+
+        status.innerText = "¡Conectado y Recibiendo Datos!";
+        status.style.color = "#38b000";
+      } catch (error) {
+        status.innerText = "Error de conexión: " + error.message;
+        status.style.color = "#d90429";
+      }
+    }
+
+    function procesarDatosEntrantes(event) {
+      const decoder = new TextDecoder('utf-8');
+      const cadenaTexto = decoder.decode(event.target.value).trim();
+      
+      // Separar por comas: [0:Temp, 1:HumAmb, 2:HumSuelo, 3:EstadoSuelo, 4:Pasos]
+      const datos = cadenaTexto.split(',');
+
+      if (datos.length >= 5) {
+        const temp = parseFloat(datos[0]);
+        const humAmb = parseFloat(datos[1]);
+        const humSuelo = parseFloat(datos[2]);
+        const estadoLetra = datos[3].trim().toUpperCase();
+        const pasos = datos[4].trim();
+
+        // 1. Mostrar valores en pantalla
+        document.getElementById('valTemp').innerText = temp;
+        document.getElementById('valHumAmb').innerText = humAmb;
+        document.getElementById('valHumSuelo').innerText = humSuelo;
+        document.getElementById('valPasos').innerText = pasos;
+
+        // Traducir letra del suelo
+        let textoSuelo = "--";
+        if (estadoLetra === 'S') textoSuelo = "Seco (S)";
+        else if (estadoLetra === 'H') textoSuelo = "Húmedo (H)";
+        else if (estadoLetra === 'M') textoSuelo = "Mojado (M)";
+        document.getElementById('valEstSuelo').innerText = textoSuelo;
+
+        // 2. Evaluar condiciones del Manglar
+        evaluarAccesoManglar(humSuelo, estadoLetra, temp);
+      }
+    }
+
+    function evaluarAccesoManglar(humSuelo, estadoLetra, temp) {
+      const banner = document.getElementById('bannerRecomendacion');
+
+      // REGLA 1: Si el suelo está mojado/anegado ('M') o la humedad es muy alta (>70%)
+      if (estadoLetra === 'M' || humSuelo > 70) {
+        banner.style.backgroundColor = "var(--danger)";
+        banner.innerHTML = "<h2>🚫 ACCESO NO RECOMENDADO</h2><p>Riesgo alto: Barro profundo o marea en ascenso.</p>";
+      } 
+      // REGLA 2: Si la temperatura supera los 36 °C
+      else if (temp >= 36) {
+        banner.style.backgroundColor = "var(--warning)";
+        banner.innerHTML = "<h2>⚠️ ENTRAR CON PRECAUCIÓN</h2><p>Calor extremo. Llevar suficiente hidratación.</p>";
+      } 
+      // REGLA 3: Condiciones normales
+      else {
+        banner.style.backgroundColor = "var(--success)";
+        banner.innerHTML = "<h2>✅ SEGURO ENTRAR</h2><p>Condiciones óptimas del terreno para el recorrido.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
